@@ -94,7 +94,7 @@ export default function AuthScreen() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: theme.colors.bg, justifyContent: 'center' },
+  wrap: { flex: 1, justifyContent: 'center' },
   inner: { paddingHorizontal: theme.spacing(4) },
   logo: {
     fontSize: 40,

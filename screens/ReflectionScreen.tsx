@@ -146,7 +146,7 @@ export default function ReflectionScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: theme.colors.bg },
+  scroll: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: theme.spacing(3), paddingTop: theme.spacing(2) },
   nav: {
     flexDirection: 'row',

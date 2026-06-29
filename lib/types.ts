@@ -53,12 +53,12 @@ export function weekStartISO(d = new Date()): string {
   return todayISO(date);
 }
 
-// Sanfte Farbpalette für Gewohnheiten
+// Lebendige, edle Farbpalette für Gewohnheiten
 export const HABIT_COLORS = [
-  '#6B7B6E', // Salbei
-  '#8C7B6B', // Sand
-  '#6B7A8C', // Nebelblau
-  '#8C6B7B', // Altrosa
-  '#7B8C6B', // Olive
-  '#7B6B8C', // Lavendel
+  '#6366F1', // Indigo
+  '#06B6D4', // Cyan
+  '#10B981', // Emerald
+  '#F59E0B', // Amber
+  '#EC4899', // Pink
+  '#8B5CF6', // Violet
 ];

@@ -126,10 +126,10 @@ export default function HabitsScreen({ userId }: { userId: string }) {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: theme.colors.bg },
+  scroll: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: theme.spacing(3), paddingTop: theme.spacing(2) },
   input: {
-    backgroundColor: theme.colors.bg,
+    backgroundColor: 'rgba(255,255,255,0.6)',
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: 12,
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   },
   segment: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.bg,
+    backgroundColor: 'rgba(255,255,255,0.6)',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.colors.border,

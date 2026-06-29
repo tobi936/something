@@ -1,3 +1,5 @@
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -10,8 +12,27 @@ import {
 } from 'react-native';
 import { theme } from '../lib/theme';
 
+export function GradientBackground({ children }: { children: React.ReactNode }) {
+  return (
+    <LinearGradient
+      colors={theme.colors.bgGradient}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={StyleSheet.absoluteFill}
+    >
+      {children}
+    </LinearGradient>
+  );
+}
+
 export function Card({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
-  return <View style={[styles.card, style]}>{children}</View>;
+  return (
+    <View style={[styles.cardWrap, theme.shadow, style]}>
+      <BlurView intensity={28} tint="light" style={styles.cardBlur}>
+        <View style={styles.cardInner}>{children}</View>
+      </BlurView>
+    </View>
+  );
 }
 
 export function ScreenTitle({ children, subtitle }: { children: string; subtitle?: string }) {
@@ -31,12 +52,20 @@ export function Muted({ children, style }: { children: React.ReactNode; style?: 
   return <Text style={[styles.muted, style]}>{children}</Text>;
 }
 
-export function Check({ on }: { on: boolean }) {
-  return (
-    <View style={[styles.check, on && styles.checkOn]}>
-      {on ? <Text style={styles.checkMark}>✓</Text> : null}
-    </View>
-  );
+export function Check({ on, color }: { on: boolean; color?: string }) {
+  if (on) {
+    return (
+      <LinearGradient
+        colors={color ? [color, color] : theme.colors.accentGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.check}
+      >
+        <Text style={styles.checkMark}>✓</Text>
+      </LinearGradient>
+    );
+  }
+  return <View style={[styles.check, styles.checkOff]} />;
 }
 
 export function SoftButton({
@@ -50,64 +79,94 @@ export function SoftButton({
   loading?: boolean;
   variant?: 'solid' | 'ghost';
 }) {
+  if (variant === 'ghost') {
+    return (
+      <Pressable
+        onPress={onPress}
+        disabled={loading}
+        style={({ pressed }) => [styles.ghost, pressed && { opacity: 0.6 }]}
+      >
+        {loading ? (
+          <ActivityIndicator color={theme.colors.text} />
+        ) : (
+          <Text style={styles.ghostText}>{label}</Text>
+        )}
+      </Pressable>
+    );
+  }
   return (
     <Pressable
       onPress={onPress}
       disabled={loading}
-      style={({ pressed }) => [
-        styles.button,
-        variant === 'ghost' && styles.buttonGhost,
-        pressed && { opacity: 0.7 },
-      ]}
+      style={({ pressed }) => [theme.shadow, { borderRadius: 14 }, pressed && { opacity: 0.85 }]}
     >
-      {loading ? (
-        <ActivityIndicator color={variant === 'ghost' ? theme.colors.text : '#fff'} />
-      ) : (
-        <Text style={[styles.buttonText, variant === 'ghost' && styles.buttonTextGhost]}>
-          {label}
-        </Text>
-      )}
+      <LinearGradient
+        colors={theme.colors.accentGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.button}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>{label}</Text>
+        )}
+      </LinearGradient>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: theme.colors.surface,
+  cardWrap: { borderRadius: theme.radius },
+  cardBlur: {
     borderRadius: theme.radius,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.glassBorder,
+  },
+  cardInner: {
+    backgroundColor: theme.colors.glass,
     padding: theme.spacing(2),
   },
-  title: { fontSize: theme.font.title, color: theme.colors.text, fontWeight: '600' },
+  title: { fontSize: theme.font.title, color: theme.colors.text, fontWeight: '700', letterSpacing: -0.5 },
   subtitle: { fontSize: theme.font.body, color: theme.colors.muted, marginTop: 4 },
   sectionLabel: {
     fontSize: theme.font.small,
     color: theme.colors.muted,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
+    fontWeight: '600',
     marginBottom: theme.spacing(1),
   },
   muted: { color: theme.colors.muted, fontSize: theme.font.body },
   check: {
     width: 26,
     height: 26,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: theme.colors.faint,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkOn: { backgroundColor: theme.colors.accent, borderColor: theme.colors.accent },
-  checkMark: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  checkOff: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: theme.colors.faint,
+  },
+  checkMark: { color: '#fff', fontSize: 15, fontWeight: '800' },
   button: {
-    backgroundColor: theme.colors.accent,
-    borderRadius: 12,
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: { color: '#fff', fontSize: theme.font.body, fontWeight: '700', letterSpacing: 0.2 },
+  ghost: {
+    borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.hairline,
+    backgroundColor: theme.colors.glassStrong,
   },
-  buttonGhost: { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.colors.border },
-  buttonText: { color: '#fff', fontSize: theme.font.body, fontWeight: '600' },
-  buttonTextGhost: { color: theme.colors.text },
+  ghostText: { color: theme.colors.text, fontSize: theme.font.body, fontWeight: '600' },
 });

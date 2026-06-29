@@ -220,7 +220,7 @@ export default function TodayScreen({ userId }: { userId: string }) {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: theme.colors.bg },
+  scroll: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: theme.spacing(3), paddingTop: theme.spacing(2) },
   row: {
     flexDirection: 'row',
