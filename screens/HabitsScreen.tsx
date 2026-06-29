@@ -10,12 +10,13 @@ import {
 import { supabase } from '../lib/supabase';
 import { theme } from '../lib/theme';
 import { Card, Muted, ScreenTitle, SectionLabel, SoftButton } from '../components/ui';
-import { Habit, todayISO } from '../lib/types';
+import { Frequency, Habit, HABIT_COLORS, todayISO } from '../lib/types';
 
 export default function HabitsScreen({ userId }: { userId: string }) {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [name, setName] = useState('');
+  const [freq, setFreq] = useState<Frequency>('daily');
   const [adding, setAdding] = useState(false);
 
   const monthStart = todayISO(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -48,8 +49,12 @@ export default function HabitsScreen({ userId }: { userId: string }) {
     const trimmed = name.trim();
     if (!trimmed) return;
     setAdding(true);
-    await supabase.from('habits').insert({ user_id: userId, name: trimmed });
+    const color = HABIT_COLORS[habits.length % HABIT_COLORS.length];
+    await supabase
+      .from('habits')
+      .insert({ user_id: userId, name: trimmed, frequency: freq, color });
     setName('');
+    setFreq('daily');
     setAdding(false);
     load();
   }
@@ -74,6 +79,19 @@ export default function HabitsScreen({ userId }: { userId: string }) {
           onSubmitEditing={add}
           style={styles.input}
         />
+        <View style={styles.segment}>
+          {(['daily', 'weekly'] as Frequency[]).map((f) => (
+            <Pressable
+              key={f}
+              onPress={() => setFreq(f)}
+              style={[styles.segmentItem, freq === f && styles.segmentItemOn]}
+            >
+              <Text style={[styles.segmentText, freq === f && styles.segmentTextOn]}>
+                {f === 'daily' ? 'Täglich' : 'Wöchentlich'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
         <SoftButton label="Hinzufügen" onPress={add} loading={adding} />
       </Card>
 
@@ -87,9 +105,12 @@ export default function HabitsScreen({ userId }: { userId: string }) {
               key={h.id}
               style={[styles.row, i < habits.length - 1 && styles.rowDivider]}
             >
+              <View style={[styles.dot, { backgroundColor: h.color }]} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{h.name}</Text>
-                <Muted style={styles.count}>{counts[h.id] ?? 0} Tage</Muted>
+                <Muted style={styles.meta}>
+                  {h.frequency === 'daily' ? 'täglich' : 'wöchentlich'} · {counts[h.id] ?? 0}×
+                </Muted>
               </View>
               <Pressable onPress={() => archive(h)} hitSlop={10}>
                 <Text style={styles.remove}>archivieren</Text>
@@ -118,9 +139,23 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: theme.spacing(1.5),
   },
+  segment: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.bg,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: 4,
+    marginBottom: theme.spacing(1.5),
+  },
+  segmentItem: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 9 },
+  segmentItemOn: { backgroundColor: theme.colors.accentSoft },
+  segmentText: { fontSize: theme.font.small, color: theme.colors.muted },
+  segmentTextOn: { color: theme.colors.text, fontWeight: '600' },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
   rowDivider: { borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+  dot: { width: 10, height: 10, borderRadius: 5, marginRight: theme.spacing(1.5) },
   name: { fontSize: theme.font.body, color: theme.colors.text },
-  count: { fontSize: theme.font.small, marginTop: 2 },
+  meta: { fontSize: theme.font.small, marginTop: 2 },
   remove: { color: theme.colors.faint, fontSize: theme.font.small },
 });
