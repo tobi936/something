@@ -1,4 +1,11 @@
 import { BlurView } from 'expo-blur';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
@@ -32,6 +39,12 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('today');
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -42,7 +55,7 @@ export default function App() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  if (loading) {
+  if (loading || !fontsLoaded) {
     return (
       <GradientBackground>
         <View style={styles.loading}>
@@ -103,8 +116,8 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   tab: { flex: 1, alignItems: 'center' },
-  tabText: { fontSize: theme.font.small, color: theme.colors.faint, fontWeight: '500' },
-  tabTextActive: { color: theme.colors.accent, fontWeight: '700' },
+  tabText: { fontSize: theme.font.small, color: theme.colors.faint, fontFamily: theme.family.medium },
+  tabTextActive: { color: theme.colors.accent, fontFamily: theme.family.bold },
   dot: {
     width: 5,
     height: 5,

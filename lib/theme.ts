@@ -3,22 +3,22 @@
 export const theme = {
   colors: {
     // Heller, kühler Verlauf statt Beige
-    bgGradient: ['#EEF1FF', '#FBFCFF', '#EAF8FF'] as const,
+    bgGradient: ['#E8F0FF', '#FBFCFF', '#E6F6FF'] as const,
 
-    text: '#16181D',
-    muted: '#6B7280',
-    faint: '#A6ABB6',
+    text: '#0F172A',
+    muted: '#64748B',
+    faint: '#9AA4B2',
 
     // Glasflächen
     glass: 'rgba(255,255,255,0.55)',
     glassStrong: 'rgba(255,255,255,0.78)',
     glassBorder: 'rgba(255,255,255,0.75)',
-    hairline: 'rgba(22,24,29,0.07)',
+    hairline: 'rgba(15,23,42,0.07)',
 
-    // Akzent
-    accent: '#6366F1',
-    accentGradient: ['#6366F1', '#8B5CF6'] as const,
-    accentSoft: 'rgba(99,102,241,0.12)',
+    // Akzent — professionelles Blau (kein Violett)
+    accent: '#2563EB',
+    accentGradient: ['#2563EB', '#3B82F6'] as const,
+    accentSoft: 'rgba(37,99,235,0.12)',
 
     onAccent: '#FFFFFF',
 
@@ -35,6 +35,12 @@ export const theme = {
     body: 16,
     small: 13,
   },
+  family: {
+    regular: 'Inter_400Regular',
+    medium: 'Inter_500Medium',
+    semibold: 'Inter_600SemiBold',
+    bold: 'Inter_700Bold',
+  },
   shadow: {
     shadowColor: '#1B1F2E',
     shadowOpacity: 0.1,
@@ -44,12 +50,12 @@ export const theme = {
   },
 };
 
-// Lebendige, aber edle Farbpalette für Gewohnheiten
+// Lebendige, aber edle Farbpalette für Gewohnheiten (kein Violett)
 export const ACCENTS = [
-  '#6366F1', // Indigo
+  '#2563EB', // Blau
   '#06B6D4', // Cyan
   '#10B981', // Emerald
   '#F59E0B', // Amber
   '#EC4899', // Pink
-  '#8B5CF6', // Violet
+  '#F43F5E', // Rose
 ];

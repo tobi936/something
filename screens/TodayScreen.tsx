@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   rowDivider: { borderBottomWidth: 1, borderBottomColor: theme.colors.border },
-  rowText: { fontSize: theme.font.body, color: theme.colors.text },
+  rowText: { fontSize: theme.font.body, color: theme.colors.text, fontFamily: theme.family.medium },
   rowTextDone: { color: theme.colors.faint, textDecorationLine: 'line-through' },
   tag: { fontSize: theme.font.small, marginTop: 2 },
   dot: { width: 10, height: 10, borderRadius: 5, marginRight: theme.spacing(1.5) },

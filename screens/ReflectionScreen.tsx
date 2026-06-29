@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   },
   arrow: { fontSize: 30, color: theme.colors.text, paddingHorizontal: theme.spacing(2) },
   arrowOff: { color: theme.colors.faint },
-  month: { fontSize: theme.font.heading, color: theme.colors.text, fontWeight: '500' },
+  month: { fontSize: theme.font.heading, color: theme.colors.text, fontFamily: theme.family.semibold },
   summary: {
     flexDirection: 'row',
     backgroundColor: theme.colors.surface,
@@ -167,11 +167,11 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(3),
   },
   summaryItem: { flex: 1, alignItems: 'center', paddingHorizontal: 4 },
-  summaryNum: { fontSize: 22, color: theme.colors.text, fontWeight: '600' },
+  summaryNum: { fontSize: 22, color: theme.colors.text, fontFamily: theme.family.bold },
   summaryLabel: { fontSize: theme.font.small, marginTop: 2 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16 },
   rowDivider: { borderBottomWidth: 1, borderBottomColor: theme.colors.border },
-  name: { fontSize: theme.font.body, color: theme.colors.text, marginBottom: 8 },
+  name: { fontSize: theme.font.body, color: theme.colors.text, marginBottom: 8, fontFamily: theme.family.medium },
   barTrack: {
     height: 6,
     borderRadius: 3,
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing(2),
   },
   barFill: { height: 6, borderRadius: 3 },
-  score: { fontSize: 22, color: theme.colors.text, fontWeight: '600' },
-  outOf: { fontSize: theme.font.body, color: theme.colors.faint, fontWeight: '400' },
+  score: { fontSize: 22, color: theme.colors.text, fontFamily: theme.family.bold },
+  outOf: { fontSize: theme.font.body, color: theme.colors.faint, fontFamily: theme.family.regular },
   foot: { marginTop: theme.spacing(4), textAlign: 'center', fontSize: theme.font.small },
 });

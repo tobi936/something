@@ -121,6 +121,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing(2),
     paddingVertical: 12,
     fontSize: theme.font.body,
+    fontFamily: theme.family.regular,
     color: theme.colors.text,
     marginBottom: theme.spacing(1.5),
   },
@@ -131,6 +132,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   rowDivider: { borderBottomWidth: 1, borderBottomColor: theme.colors.border },
-  rowText: { fontSize: theme.font.body, color: theme.colors.text, flex: 1 },
+  rowText: { fontSize: theme.font.body, color: theme.colors.text, flex: 1, fontFamily: theme.family.medium },
   doneText: { color: theme.colors.faint, textDecorationLine: 'line-through' },
 });

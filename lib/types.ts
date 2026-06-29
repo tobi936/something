@@ -53,12 +53,12 @@ export function weekStartISO(d = new Date()): string {
   return todayISO(date);
 }
 
-// Lebendige, edle Farbpalette für Gewohnheiten
+// Lebendige, edle Farbpalette für Gewohnheiten (kein Violett)
 export const HABIT_COLORS = [
-  '#6366F1', // Indigo
+  '#2563EB', // Blau
   '#06B6D4', // Cyan
   '#10B981', // Emerald
   '#F59E0B', // Amber
   '#EC4899', // Pink
-  '#8B5CF6', // Violet
+  '#F43F5E', // Rose
 ];
