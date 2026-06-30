@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "tobi-os",
-    "slug": "tobi-os",
+    "name": "Arc",
+    "slug": "arc",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "tobios",
+    "scheme": "arc",
     "ios": {
       "supportsTablet": true
     },
