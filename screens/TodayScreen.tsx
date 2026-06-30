@@ -149,6 +149,7 @@ export default function TodayScreen({ userId }: { userId: string }) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [justDone, setJustDone] = useState<Todo[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [eventTitles, setEventTitles] = useState<Record<string, string>>({});
   const [newTodo, setNewTodo] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [shortcutDismissed, setShortcutDismissed] = useState(true); // default true until loaded
@@ -179,11 +180,26 @@ export default function TodayScreen({ userId }: { userId: string }) {
         .lte('start_time', `${today}T23:59:59`)
         .order('start_time'),
     ]);
+    const loadedTodos = (t.data as Todo[]) ?? [];
     setHabits((h.data as Habit[]) ?? []);
     setWeekEntries((ent.data as HabitEntry[]) ?? []);
-    setTodos((t.data as Todo[]) ?? []);
+    setTodos(loadedTodos);
     setJustDone([]);
     setEvents((ev.data as CalendarEvent[]) ?? []);
+
+    // Titel der verlinkten Termine nachladen (z.B. „Prüfung" für ein Lern-Todo)
+    const linkedIds = [...new Set(loadedTodos.map((x) => x.event_id).filter(Boolean))] as string[];
+    if (linkedIds.length > 0) {
+      const { data: linked } = await supabase
+        .from('calendar_events')
+        .select('id, title')
+        .in('id', linkedIds);
+      const map: Record<string, string> = {};
+      for (const e of (linked as { id: string; title: string }[]) ?? []) map[e.id] = e.title;
+      setEventTitles(map);
+    } else {
+      setEventTitles({});
+    }
   }, [today, weekStart]);
 
   useEffect(() => {
@@ -296,6 +312,7 @@ export default function TodayScreen({ userId }: { userId: string }) {
       done: false,
       due_date: null,
       notes: null,
+      event_id: null,
       created_at: new Date().toISOString(),
     };
     setTodos((prev) => [...prev, optimistic]);
@@ -425,7 +442,9 @@ export default function TodayScreen({ userId }: { userId: string }) {
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={styles.rowText}>{t.title}</Text>
-                    {t.due_date ? (
+                    {t.event_id && eventTitles[t.event_id] ? (
+                      <Muted style={styles.tag}>→ {eventTitles[t.event_id]}</Muted>
+                    ) : t.due_date ? (
                       <Muted style={styles.tag}>fällig {t.due_date}</Muted>
                     ) : null}
                   </View>
@@ -452,10 +471,12 @@ export default function TodayScreen({ userId }: { userId: string }) {
             <SectionLabel>Termine</SectionLabel>
             <Card>
               {events.map((ev, i) => {
-                const time = new Date(ev.start_time).toLocaleTimeString('de-CH', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                });
+                const time = ev.all_day
+                  ? 'ganztägig'
+                  : new Date(ev.start_time).toLocaleTimeString('de-CH', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    });
                 return (
                   <View
                     key={ev.id}

@@ -33,6 +33,7 @@ export type Todo = {
   done: boolean;
   due_date: string | null;
   notes: string | null;
+  event_id: string | null;
   created_at: string;
 };
 
@@ -42,6 +43,8 @@ export type CalendarEvent = {
   title: string;
   start_time: string;
   end_time: string | null;
+  all_day: boolean;
+  notes: string | null;
   source: string;
   created_at: string;
 };
@@ -60,6 +63,68 @@ export function weekStartISO(d = new Date()): string {
   const day = (date.getDay() + 6) % 7; // Mo=0 … So=6
   date.setDate(date.getDate() - day);
   return todayISO(date);
+}
+
+// ── Datums-Helfer für den Kalender ───────────────────────────────────────────
+
+// YYYY-MM-DD → Date (lokale Mitternacht, ohne Zeitzonen-Verschiebung)
+export function isoToDate(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+// n Tage zu einem ISO-Datum addieren (n darf negativ sein)
+export function addDaysISO(iso: string, n: number): string {
+  const date = isoToDate(iso);
+  date.setDate(date.getDate() + n);
+  return todayISO(date);
+}
+
+// Erster und letzter Tag eines Monats als YYYY-MM-DD
+export function monthRange(year: number, month: number): { firstISO: string; lastISO: string } {
+  return {
+    firstISO: todayISO(new Date(year, month, 1)),
+    lastISO: todayISO(new Date(year, month + 1, 0)),
+  };
+}
+
+// Wochen-Raster (Mo–So) für die Monatsansicht. Jede Woche hat 7 Einträge;
+// Tage ausserhalb des Monats sind mit inMonth=false markiert.
+export type CalendarCell = { iso: string; day: number; inMonth: boolean };
+
+export function monthMatrix(year: number, month: number): CalendarCell[][] {
+  const first = new Date(year, month, 1);
+  const offset = (first.getDay() + 6) % 7; // Mo=0 … So=6
+  const start = new Date(year, month, 1 - offset);
+
+  const weeks: CalendarCell[][] = [];
+  const cursor = new Date(start);
+  for (let w = 0; w < 6; w++) {
+    const week: CalendarCell[] = [];
+    for (let d = 0; d < 7; d++) {
+      week.push({
+        iso: todayISO(cursor),
+        day: cursor.getDate(),
+        inMonth: cursor.getMonth() === month,
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    weeks.push(week);
+    // Letzte Zeile weglassen, wenn sie komplett im Folgemonat liegt
+    if (w >= 4 && cursor.getMonth() !== month) break;
+  }
+  return weeks;
+}
+
+export const WEEKDAY_LABELS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+// Lesbares Datum, z.B. "Fr, 3. Juli"
+export function formatDayLabel(iso: string): string {
+  return isoToDate(iso).toLocaleDateString('de-CH', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'long',
+  });
 }
 
 // Lebendige, edle Farbpalette für Gewohnheiten (kein Violett)
