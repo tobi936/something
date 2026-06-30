@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -152,6 +152,7 @@ export default function TodayScreen({ userId }: { userId: string }) {
   const [newTodo, setNewTodo] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [shortcutDismissed, setShortcutDismissed] = useState(true); // default true until loaded
+  const autoMarkedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     AsyncStorage.getItem(DISMISSED_KEY).then((v) => {
@@ -165,6 +166,7 @@ export default function TodayScreen({ userId }: { userId: string }) {
   }
 
   const load = useCallback(async () => {
+    autoMarkedRef.current = new Set();
     const [h, ent, t, ev] = await Promise.all([
       supabase.from('habits').select('*').eq('archived', false).order('created_at'),
       supabase.from('habit_entries').select('*').gte('date', weekStart).lte('date', today),
@@ -186,6 +188,47 @@ export default function TodayScreen({ userId }: { userId: string }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Auto-mark conditional habits when screen time data is available
+  useEffect(() => {
+    if (importedScreenTime === null || habits.length === 0) return;
+
+    const toMark: Habit[] = [];
+    for (const h of habits) {
+      if (!h.condition) continue;
+      if (autoMarkedRef.current.has(h.id)) continue;
+
+      const { type, value } = h.condition;
+      const met =
+        (type === 'screen_time_lt' && importedScreenTime < value) ||
+        (type === 'screen_time_gt' && importedScreenTime > value);
+
+      autoMarkedRef.current.add(h.id);
+      if (!met) continue;
+
+      const alreadyDone =
+        h.frequency === 'weekly'
+          ? weekEntries.some((e) => e.habit_id === h.id)
+          : weekEntries.some((e) => e.habit_id === h.id && e.date === today);
+      if (!alreadyDone) toMark.push(h);
+    }
+
+    if (toMark.length === 0) return;
+
+    setWeekEntries((prev) => [
+      ...prev,
+      ...toMark.map((h) => ({
+        id: `auto-${h.id}`,
+        habit_id: h.id,
+        user_id: userId,
+        date: today,
+        created_at: new Date().toISOString(),
+      })),
+    ]);
+    toMark.forEach((h) =>
+      supabase.from('habit_entries').insert({ habit_id: h.id, user_id: userId, date: today }),
+    );
+  }, [importedScreenTime, habits, weekEntries, today, userId]);
 
   function isDone(h: Habit): boolean {
     if (h.frequency === 'weekly') return weekEntries.some((e) => e.habit_id === h.id);
@@ -325,8 +368,13 @@ export default function TodayScreen({ userId }: { userId: string }) {
                     <View style={[styles.habitDot, { backgroundColor: h.color }]} />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.rowText, on && styles.rowTextDone]}>{h.name}</Text>
-                      {h.frequency === 'weekly' ? (
+                      {h.frequency === 'weekly' && !h.condition ? (
                         <Muted style={styles.tag}>diese Woche</Muted>
+                      ) : null}
+                      {h.condition ? (
+                        <Muted style={styles.tag}>
+                          auto · {h.condition.type === 'screen_time_lt' ? '<' : '>'}{Math.round(h.condition.value / 60)}h Bildschirm
+                        </Muted>
                       ) : null}
                     </View>
                     <Check on={on} color={h.color} />

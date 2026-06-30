@@ -10,6 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   Pressable,
   SafeAreaView,
   StyleSheet,
@@ -26,19 +27,19 @@ import HabitsScreen from './screens/HabitsScreen';
 import ReflectionScreen from './screens/ReflectionScreen';
 import SettingsScreen from './screens/SettingsScreen';
 
-type Tab = 'today' | 'habits' | 'reflection' | 'settings';
+type Tab = 'today' | 'habits' | 'reflection';
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'today', label: 'Heute' },
   { key: 'habits', label: 'Gewohnheiten' },
   { key: 'reflection', label: 'Rückblick' },
-  { key: 'settings', label: 'Einstellungen' },
 ];
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('today');
+  const [showSettings, setShowSettings] = useState(false);
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -84,7 +85,6 @@ export default function App() {
           {tab === 'today' && <TodayScreen userId={userId} />}
           {tab === 'habits' && <HabitsScreen userId={userId} />}
           {tab === 'reflection' && <ReflectionScreen />}
-          {tab === 'settings' && <SettingsScreen userId={userId} />}
         </View>
 
         <BlurView intensity={40} tint="light" style={styles.tabbar}>
@@ -97,8 +97,30 @@ export default function App() {
               </Pressable>
             );
           })}
+          <Pressable style={styles.settingsBtn} onPress={() => setShowSettings(true)} hitSlop={8}>
+            <Text style={styles.settingsIcon}>⚙</Text>
+          </Pressable>
         </BlurView>
       </SafeAreaView>
+
+      <Modal
+        visible={showSettings}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowSettings(false)}
+      >
+        <GradientBackground>
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Einstellungen</Text>
+              <Pressable onPress={() => setShowSettings(false)} hitSlop={12}>
+                <Text style={styles.modalClose}>Fertig</Text>
+              </Pressable>
+            </View>
+            <SettingsScreen userId={userId} />
+          </SafeAreaView>
+        </GradientBackground>
+      </Modal>
     </GradientBackground>
   );
 }
@@ -109,11 +131,13 @@ const styles = StyleSheet.create({
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   tabbar: {
     flexDirection: 'row',
+    alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: theme.colors.glassBorder,
     backgroundColor: 'rgba(255,255,255,0.6)',
     paddingTop: 12,
     paddingBottom: 12,
+    paddingHorizontal: 4,
   },
   tab: { flex: 1, alignItems: 'center' },
   tabText: { fontSize: theme.font.small, color: theme.colors.faint, fontFamily: theme.family.medium },
@@ -126,4 +150,23 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   dotEmpty: { width: 5, height: 5, marginTop: 5 },
+  settingsBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 4,
+  },
+  settingsIcon: { fontSize: 18, color: theme.colors.faint },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing(3),
+    paddingVertical: theme.spacing(2),
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.glassBorder,
+  },
+  modalTitle: { fontSize: theme.font.body, color: theme.colors.text, fontFamily: theme.family.bold },
+  modalClose: { fontSize: theme.font.body, color: theme.colors.accent, fontFamily: theme.family.medium },
 });
