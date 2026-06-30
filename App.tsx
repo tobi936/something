@@ -84,7 +84,7 @@ export default function App() {
         <View style={styles.body}>
           {tab === 'today' && <TodayScreen userId={userId} />}
           {tab === 'habits' && <HabitsScreen userId={userId} />}
-          {tab === 'reflection' && <ReflectionScreen />}
+          {tab === 'reflection' && <ReflectionScreen onSettingsPress={() => setShowSettings(true)} />}
         </View>
 
         <BlurView intensity={40} tint="light" style={styles.tabbar}>
@@ -97,9 +97,6 @@ export default function App() {
               </Pressable>
             );
           })}
-          <Pressable style={styles.settingsBtn} onPress={() => setShowSettings(true)} hitSlop={8}>
-            <Text style={styles.settingsIcon}>⚙</Text>
-          </Pressable>
         </BlurView>
       </SafeAreaView>
 
@@ -150,14 +147,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   dotEmpty: { width: 5, height: 5, marginTop: 5 },
-  settingsBtn: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 4,
-  },
-  settingsIcon: { fontSize: 18, color: theme.colors.faint },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
