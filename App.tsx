@@ -23,15 +23,13 @@ import { GradientBackground } from './components/ui';
 import AuthScreen from './screens/AuthScreen';
 import TodayScreen from './screens/TodayScreen';
 import HabitsScreen from './screens/HabitsScreen';
-import TodosScreen from './screens/TodosScreen';
 import ReflectionScreen from './screens/ReflectionScreen';
 
-type Tab = 'today' | 'habits' | 'todos' | 'reflection';
+type Tab = 'today' | 'habits' | 'reflection';
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'today', label: 'Heute' },
   { key: 'habits', label: 'Gewohnheiten' },
-  { key: 'todos', label: 'Todos' },
   { key: 'reflection', label: 'Rückblick' },
 ];
 
@@ -83,7 +81,6 @@ export default function App() {
         <View style={styles.body}>
           {tab === 'today' && <TodayScreen userId={userId} />}
           {tab === 'habits' && <HabitsScreen userId={userId} />}
-          {tab === 'todos' && <TodosScreen userId={userId} />}
           {tab === 'reflection' && <ReflectionScreen />}
         </View>
 
