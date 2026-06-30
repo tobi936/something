@@ -1,3 +1,7 @@
 # Expo HAS CHANGED
 
 Read the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing any code.
+
+# Workflow
+
+Sobald eine Aufgabe abgeschlossen ist: PR erstellen (draft → ready) und direkt mergen. Nicht auf Bestätigung warten.
