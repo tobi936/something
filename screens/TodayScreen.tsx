@@ -1,5 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  AppState,
+  AppStateStatus,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -16,6 +19,26 @@ import { theme } from '../lib/theme';
 import { Card, Check, Muted, SectionLabel } from '../components/ui';
 import { CalendarEvent, Habit, HabitEntry, Todo, todayISO, weekStartISO } from '../lib/types';
 
+// ── In-app screen time ──────────────────────────────────────────────────────
+const STORAGE_KEY = () => `screentime_${todayISO()}`;
+
+async function loadSecondsToday(): Promise<number> {
+  const v = await AsyncStorage.getItem(STORAGE_KEY());
+  return v ? parseInt(v, 10) : 0;
+}
+
+async function saveSecondsToday(s: number) {
+  await AsyncStorage.setItem(STORAGE_KEY(), String(s));
+}
+
+function formatTime(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  if (m < 60) return `${m}m`;
+  return `${Math.floor(m / 60)}h ${m % 60}m`;
+}
+
+// ── Greeting ────────────────────────────────────────────────────────────────
 function greeting(): string {
   const h = new Date().getHours();
   if (h < 11) return 'Guten Morgen';
@@ -24,7 +47,16 @@ function greeting(): string {
   return 'Gute Nacht';
 }
 
-function ProgressRing({ done, total }: { done: number; total: number }) {
+// ── Progress ring ───────────────────────────────────────────────────────────
+function ProgressRing({
+  done,
+  total,
+  pending,
+}: {
+  done: number;
+  total: number;
+  pending: string[];
+}) {
   const SIZE = 200;
   const cx = SIZE / 2;
   const cy = SIZE / 2;
@@ -33,41 +65,56 @@ function ProgressRing({ done, total }: { done: number; total: number }) {
   const circ = 2 * Math.PI * R;
   const pct = total > 0 ? done / total : 0;
   const dash = pct * circ;
+  const allDone = total > 0 && done === total;
 
   return (
-    <View style={styles.ringWrap}>
-      <Svg width={SIZE} height={SIZE} style={StyleSheet.absoluteFill}>
-        {/* Track */}
-        <Circle
-          cx={cx}
-          cy={cy}
-          r={R}
-          stroke="rgba(22,24,29,0.07)"
-          strokeWidth={SW}
-          fill="none"
-        />
-        {/* Progress arc — rotated to start at 12 o'clock */}
-        {dash > 0 && (
-          <G transform={`rotate(-90, ${cx}, ${cy})`}>
-            <Circle
-              cx={cx}
-              cy={cy}
-              r={R}
-              stroke={theme.colors.accent}
-              strokeWidth={SW}
-              fill="none"
-              strokeDasharray={`${dash} ${circ - dash}`}
-              strokeLinecap="round"
-            />
-          </G>
-        )}
-      </Svg>
-      <Text style={styles.ringNum}>{total > 0 ? done : '—'}</Text>
-      {total > 0 && <Text style={styles.ringDen}>/ {total}</Text>}
+    <View style={styles.ringSection}>
+      <View style={styles.ringWrap}>
+        <Svg width={SIZE} height={SIZE} style={StyleSheet.absoluteFill}>
+          <Circle
+            cx={cx}
+            cy={cy}
+            r={R}
+            stroke="rgba(22,24,29,0.07)"
+            strokeWidth={SW}
+            fill="none"
+          />
+          {dash > 0 && (
+            <G transform={`rotate(-90, ${cx}, ${cy})`}>
+              <Circle
+                cx={cx}
+                cy={cy}
+                r={R}
+                stroke={allDone ? '#10B981' : theme.colors.accent}
+                strokeWidth={SW}
+                fill="none"
+                strokeDasharray={`${dash} ${circ - dash}`}
+                strokeLinecap="round"
+              />
+            </G>
+          )}
+        </Svg>
+        <Text style={styles.ringNum}>{total > 0 ? done : '—'}</Text>
+        {total > 0 && <Text style={styles.ringDen}>/ {total}</Text>}
+      </View>
+
+      {/* Pending label or all-done */}
+      {allDone ? (
+        <Muted style={styles.ringLabel}>Alles erledigt heute</Muted>
+      ) : pending.length > 0 ? (
+        <Muted style={styles.ringLabel}>
+          {pending.join(' · ')} ausstehend
+        </Muted>
+      ) : (
+        <Muted style={styles.ringLabel}>
+          {total === 0 ? 'Noch keine Gewohnheiten' : 'Gewohnheiten heute'}
+        </Muted>
+      )}
     </View>
   );
 }
 
+// ── Main screen ─────────────────────────────────────────────────────────────
 export default function TodayScreen({ userId }: { userId: string }) {
   const today = todayISO();
   const weekStart = weekStartISO();
@@ -78,6 +125,54 @@ export default function TodayScreen({ userId }: { userId: string }) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [newTodo, setNewTodo] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+
+  // Screen time tracking
+  const [secondsToday, setSecondsToday] = useState(0);
+  const sessionStart = useRef<number | null>(null);
+  const accumulatedRef = useRef(0);
+
+  useEffect(() => {
+    loadSecondsToday().then((s) => {
+      accumulatedRef.current = s;
+      setSecondsToday(s);
+    });
+
+    sessionStart.current = Date.now();
+
+    // Tick every 10s to update display
+    const ticker = setInterval(() => {
+      if (sessionStart.current != null) {
+        const sessionSec = Math.floor((Date.now() - sessionStart.current) / 1000);
+        setSecondsToday(accumulatedRef.current + sessionSec);
+      }
+    }, 10000);
+
+    const handleAppState = (next: AppStateStatus) => {
+      if (next === 'background' || next === 'inactive') {
+        if (sessionStart.current != null) {
+          const elapsed = Math.floor((Date.now() - sessionStart.current) / 1000);
+          accumulatedRef.current += elapsed;
+          saveSecondsToday(accumulatedRef.current);
+          setSecondsToday(accumulatedRef.current);
+          sessionStart.current = null;
+        }
+      } else if (next === 'active') {
+        sessionStart.current = Date.now();
+      }
+    };
+
+    const sub = AppState.addEventListener('change', handleAppState);
+    return () => {
+      clearInterval(ticker);
+      sub.remove();
+      // Save on unmount
+      if (sessionStart.current != null) {
+        const elapsed = Math.floor((Date.now() - sessionStart.current) / 1000);
+        accumulatedRef.current += elapsed;
+        saveSecondsToday(accumulatedRef.current);
+      }
+    };
+  }, []);
 
   const load = useCallback(async () => {
     const [h, ent, t, ev] = await Promise.all([
@@ -161,7 +256,8 @@ export default function TodayScreen({ userId }: { userId: string }) {
     if (data) setTodos((prev) => [...prev, data as Todo]);
   }
 
-  const done = habits.filter((h) => isDone(h)).length;
+  const doneHabits = habits.filter((h) => isDone(h));
+  const pendingHabits = habits.filter((h) => !isDone(h));
   const dateStr = new Date().toLocaleDateString('de-CH', {
     weekday: 'long',
     day: 'numeric',
@@ -191,15 +287,19 @@ export default function TodayScreen({ userId }: { userId: string }) {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>{greeting()}</Text>
-          <Muted style={styles.dateText}>{dateStr}</Muted>
+          <View>
+            <Text style={styles.greeting}>{greeting()}</Text>
+            <Muted style={styles.dateText}>{dateStr}</Muted>
+          </View>
+          <Muted style={styles.screenTime}>{formatTime(secondsToday)} im App</Muted>
         </View>
 
         {/* Ring */}
-        <ProgressRing done={done} total={habits.length} />
-        <Muted style={styles.ringLabel}>
-          {habits.length === 0 ? 'Noch keine Gewohnheiten' : 'Gewohnheiten heute'}
-        </Muted>
+        <ProgressRing
+          done={doneHabits.length}
+          total={habits.length}
+          pending={pendingHabits.map((h) => h.name)}
+        />
 
         {/* Habits */}
         {habits.length > 0 && (
@@ -247,7 +347,7 @@ export default function TodayScreen({ userId }: { userId: string }) {
             <Muted style={styles.empty}>Nichts offen.</Muted>
           ) : (
             <>
-              {todos.map((t, i) => (
+              {todos.map((t) => (
                 <Pressable
                   key={t.id}
                   onPress={() => completeTodo(t)}
@@ -275,7 +375,7 @@ export default function TodayScreen({ userId }: { userId: string }) {
           )}
         </Card>
 
-        {/* Calendar events (only if any) */}
+        {/* Calendar events */}
         {events.length > 0 && (
           <>
             <SectionLabel>Termine</SectionLabel>
@@ -309,7 +409,12 @@ const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: theme.spacing(3), paddingTop: theme.spacing(2) },
 
-  header: { marginBottom: theme.spacing(3) },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing(3),
+  },
   greeting: {
     fontSize: theme.font.title,
     color: theme.colors.text,
@@ -317,11 +422,12 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   dateText: { marginTop: 4, fontSize: theme.font.body },
+  screenTime: { fontSize: theme.font.small, marginTop: 6 },
 
+  ringSection: { alignItems: 'center', marginBottom: theme.spacing(3) },
   ringWrap: {
     width: 200,
     height: 200,
-    alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -342,7 +448,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: theme.font.small,
     marginTop: 10,
-    marginBottom: theme.spacing(3),
   },
 
   row: {
@@ -358,7 +463,12 @@ const styles = StyleSheet.create({
   habitDot: { width: 10, height: 10, borderRadius: 5, marginRight: theme.spacing(1.5) },
   empty: { paddingVertical: 8, fontSize: theme.font.body },
 
-  addRow: { borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingBottom: 12, marginBottom: 2 },
+  addRow: {
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    paddingBottom: 12,
+    marginBottom: 2,
+  },
   addInput: {
     fontSize: theme.font.body,
     color: theme.colors.text,
