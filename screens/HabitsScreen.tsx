@@ -22,6 +22,7 @@ export default function HabitsScreen({ userId }: { userId: string }) {
   const [conditionEnabled, setConditionEnabled] = useState(false);
   const [conditionType, setConditionType] = useState<HabitConditionType>('screen_time_lt');
   const [conditionHours, setConditionHours] = useState('2');
+  const [nameError, setNameError] = useState(false);
 
   const monthStart = todayISO(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 
@@ -51,7 +52,11 @@ export default function HabitsScreen({ userId }: { userId: string }) {
 
   async function add() {
     const trimmed = name.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      setNameError(true);
+      return;
+    }
+    setNameError(false);
     setAdding(true);
     const color = HABIT_COLORS[habits.length % HABIT_COLORS.length];
     const condition: HabitCondition | null = conditionEnabled
@@ -65,6 +70,7 @@ export default function HabitsScreen({ userId }: { userId: string }) {
     setConditionEnabled(false);
     setConditionType('screen_time_lt');
     setConditionHours('2');
+    setNameError(false);
     setAdding(false);
     load();
   }
@@ -83,12 +89,15 @@ export default function HabitsScreen({ userId }: { userId: string }) {
       <Card style={{ marginBottom: theme.spacing(3) }}>
         <TextInput
           placeholder="Neue Gewohnheit …"
-          placeholderTextColor={theme.colors.faint}
+          placeholderTextColor={nameError ? '#F43F5E' : theme.colors.faint}
           value={name}
-          onChangeText={setName}
+          onChangeText={(t) => { setName(t); if (t.trim()) setNameError(false); }}
           onSubmitEditing={add}
-          style={styles.input}
+          style={[styles.input, nameError && styles.inputError]}
         />
+        {nameError && (
+          <Text style={styles.errorText}>Bitte einen Titel eingeben.</Text>
+        )}
         <View style={styles.segment}>
           {(['daily', 'weekly'] as Frequency[]).map((f) => (
             <Pressable
@@ -207,7 +216,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: theme.font.body,
     color: theme.colors.text,
+    marginBottom: 4,
+  },
+  inputError: {
+    borderColor: '#F43F5E',
+    backgroundColor: 'rgba(244,63,94,0.05)',
+  },
+  errorText: {
+    fontSize: theme.font.small,
+    color: '#F43F5E',
+    fontFamily: theme.family.regular,
     marginBottom: theme.spacing(1.5),
+    marginLeft: 4,
   },
   segment: {
     flexDirection: 'row',
