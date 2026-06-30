@@ -124,7 +124,7 @@ const STEPS = [
   'Tippe auf „Automatisierung" → „+" → „Persönliche Automatisierung".',
   'Wähle „Tageszeit" (z.B. jeden Tag um 22:00 Uhr).',
   'Füge Aktion „Bildschirmzeit-Zusammenfassung abrufen" hinzu.',
-  'Füge Aktion „URL öffnen" hinzu mit:\narc://screentime?minutes=[Ergebnis der vorherigen Aktion]',
+  'Füge Aktion „URL öffnen" hinzu mit:\nflux://screentime?minutes=[Ergebnis der vorherigen Aktion]',
   'Deaktiviere „Vor Ausführung fragen" und speichere.',
 ];
 

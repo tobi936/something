@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Arc",
-    "slug": "arc",
+    "name": "Flux",
+    "slug": "flux",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "arc",
+    "scheme": "flux",
     "ios": {
       "supportsTablet": true
     },
