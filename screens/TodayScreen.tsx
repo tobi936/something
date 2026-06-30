@@ -153,6 +153,7 @@ export default function TodayScreen({ userId }: { userId: string }) {
   const [refreshing, setRefreshing] = useState(false);
   const [shortcutDismissed, setShortcutDismissed] = useState(true); // default true until loaded
   const autoMarkedRef = useRef<Set<string>>(new Set());
+  const importedScreenTime = useImportedScreenTime();
 
   useEffect(() => {
     AsyncStorage.getItem(DISMISSED_KEY).then((v) => {
@@ -294,8 +295,6 @@ export default function TodayScreen({ userId }: { userId: string }) {
       .single();
     if (data) setTodos((prev) => [...prev, data as Todo]);
   }
-
-  const importedScreenTime = useImportedScreenTime();
 
   const doneHabits = habits.filter((h) => isDone(h));
   const pendingHabits = habits.filter((h) => !isDone(h));
