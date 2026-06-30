@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, G, Line, Path } from 'react-native-svg';
-import { Feather } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { theme } from '../lib/theme';
 import { Card, Muted, SectionLabel } from '../components/ui';
@@ -10,6 +9,27 @@ import { Habit, todayISO, weekStartISO } from '../lib/types';
 type Entry = { habit_id: string; date: string };
 type ScreenTimeRow = { date: string; minutes: number };
 type Mode = 'month' | 'year';
+
+function GearIcon({ size = 20, color = theme.colors.faint }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 15a3 3 0 100-6 3 3 0 000 6z"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 const SCREEN_TIME_COLOR = '#F43F5E'; // Rose — distinct from habit colours
 
@@ -268,7 +288,7 @@ export default function ReflectionScreen({ onSettingsPress }: { onSettingsPress?
         </View>
         {onSettingsPress && (
           <Pressable onPress={onSettingsPress} hitSlop={12} style={styles.settingsBtn}>
-            <Feather name="settings" size={20} color={theme.colors.faint} />
+            <GearIcon size={20} />
           </Pressable>
         )}
       </View>
