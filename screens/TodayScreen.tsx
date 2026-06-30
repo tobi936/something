@@ -234,6 +234,12 @@ export default function TodayScreen({ userId }: { userId: string }) {
     supabase.from('todos').update({ done: true }).eq('id', todo.id);
   }
 
+  function reopenTodo(todo: Todo) {
+    setJustDone((prev) => prev.filter((t) => t.id !== todo.id));
+    setTodos((prev) => [{ ...todo, done: false }, ...prev]);
+    supabase.from('todos').update({ done: false }).eq('id', todo.id);
+  }
+
   async function addTodo() {
     const trimmed = newTodo.trim();
     if (!trimmed) return;
@@ -365,13 +371,14 @@ export default function TodayScreen({ userId }: { userId: string }) {
                 </Pressable>
               ))}
               {justDone.map((t, i) => (
-                <View
+                <Pressable
                   key={t.id}
+                  onPress={() => reopenTodo(t)}
                   style={[styles.row, i < justDone.length - 1 && styles.rowDivider]}
                 >
                   <Text style={[styles.rowText, styles.rowTextDone]}>{t.title}</Text>
                   <Check on={true} />
-                </View>
+                </Pressable>
               ))}
             </>
           )}

@@ -24,6 +24,7 @@ export type Todo = {
   title: string;
   done: boolean;
   due_date: string | null;
+  notes: string | null;
   created_at: string;
 };
 

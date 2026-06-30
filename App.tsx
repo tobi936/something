@@ -24,13 +24,15 @@ import AuthScreen from './screens/AuthScreen';
 import TodayScreen from './screens/TodayScreen';
 import HabitsScreen from './screens/HabitsScreen';
 import ReflectionScreen from './screens/ReflectionScreen';
+import SettingsScreen from './screens/SettingsScreen';
 
-type Tab = 'today' | 'habits' | 'reflection';
+type Tab = 'today' | 'habits' | 'reflection' | 'settings';
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'today', label: 'Heute' },
   { key: 'habits', label: 'Gewohnheiten' },
   { key: 'reflection', label: 'Rückblick' },
+  { key: 'settings', label: 'Einstellungen' },
 ];
 
 export default function App() {
@@ -82,6 +84,7 @@ export default function App() {
           {tab === 'today' && <TodayScreen userId={userId} />}
           {tab === 'habits' && <HabitsScreen userId={userId} />}
           {tab === 'reflection' && <ReflectionScreen />}
+          {tab === 'settings' && <SettingsScreen userId={userId} />}
         </View>
 
         <BlurView intensity={40} tint="light" style={styles.tabbar}>
