@@ -18,6 +18,7 @@ import { supabase } from '../lib/supabase';
 import { theme } from '../lib/theme';
 import { Card, Check, Muted, SectionLabel } from '../components/ui';
 import { CalendarEvent, Habit, HabitEntry, Todo, todayISO, weekStartISO } from '../lib/types';
+import { formatMinutes, useImportedScreenTime } from '../lib/useScreenTime';
 
 // ── In-app screen time ──────────────────────────────────────────────────────
 const STORAGE_KEY = () => `screentime_${todayISO()}`;
@@ -256,6 +257,8 @@ export default function TodayScreen({ userId }: { userId: string }) {
     if (data) setTodos((prev) => [...prev, data as Todo]);
   }
 
+  const importedScreenTime = useImportedScreenTime();
+
   const doneHabits = habits.filter((h) => isDone(h));
   const pendingHabits = habits.filter((h) => !isDone(h));
   const dateStr = new Date().toLocaleDateString('de-CH', {
@@ -291,7 +294,19 @@ export default function TodayScreen({ userId }: { userId: string }) {
             <Text style={styles.greeting}>{greeting()}</Text>
             <Muted style={styles.dateText}>{dateStr}</Muted>
           </View>
-          <Muted style={styles.screenTime}>{formatTime(secondsToday)} im App</Muted>
+          <View style={styles.timeBox}>
+            {importedScreenTime !== null ? (
+              <>
+                <Text style={styles.screenTimeNum}>{formatMinutes(importedScreenTime)}</Text>
+                <Muted style={styles.screenTimeSub}>Bildschirmzeit</Muted>
+              </>
+            ) : (
+              <>
+                <Text style={styles.screenTimeNum}>{formatTime(secondsToday)}</Text>
+                <Muted style={styles.screenTimeSub}>im App</Muted>
+              </>
+            )}
+          </View>
         </View>
 
         {/* Ring */}
@@ -422,7 +437,9 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   dateText: { marginTop: 4, fontSize: theme.font.body },
-  screenTime: { fontSize: theme.font.small, marginTop: 6 },
+  timeBox: { alignItems: 'flex-end', marginTop: 6 },
+  screenTimeNum: { fontSize: 16, color: theme.colors.text, fontFamily: theme.family.semibold },
+  screenTimeSub: { fontSize: 10, marginTop: 1 },
 
   ringSection: { alignItems: 'center', marginBottom: theme.spacing(3) },
   ringWrap: {
