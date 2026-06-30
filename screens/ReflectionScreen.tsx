@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, G, Line, Path } from 'react-native-svg';
+import { Feather } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { theme } from '../lib/theme';
-import { Card, Muted, ScreenTitle, SectionLabel } from '../components/ui';
+import { Card, Muted, SectionLabel } from '../components/ui';
 import { Habit, todayISO, weekStartISO } from '../lib/types';
 
 type Entry = { habit_id: string; date: string };
@@ -90,7 +91,7 @@ function LineChart({
   );
 }
 
-export default function ReflectionScreen() {
+export default function ReflectionScreen({ onSettingsPress }: { onSettingsPress?: () => void }) {
   const [mode, setMode] = useState<Mode>('month');
   const [offset, setOffset] = useState(0);
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -260,7 +261,17 @@ export default function ReflectionScreen() {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-      <ScreenTitle subtitle="Schau zurück. Die Zahlen sind deine.">Rückblick</ScreenTitle>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Rückblick</Text>
+          <Text style={styles.subtitle}>Schau zurück. Die Zahlen sind deine.</Text>
+        </View>
+        {onSettingsPress && (
+          <Pressable onPress={onSettingsPress} hitSlop={12} style={styles.settingsBtn}>
+            <Feather name="settings" size={20} color={theme.colors.faint} />
+          </Pressable>
+        )}
+      </View>
 
       {/* Mode toggle */}
       <View style={styles.toggle}>
@@ -444,6 +455,28 @@ export default function ReflectionScreen() {
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: theme.spacing(3), paddingTop: theme.spacing(2) },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing(3),
+  },
+  title: {
+    fontSize: theme.font.title,
+    color: theme.colors.text,
+    fontFamily: theme.family.bold,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: theme.font.body,
+    color: theme.colors.muted,
+    fontFamily: theme.family.regular,
+    marginTop: 4,
+  },
+  settingsBtn: {
+    marginTop: 6,
+    padding: 4,
+  },
 
   toggle: {
     flexDirection: 'row',

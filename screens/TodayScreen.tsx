@@ -288,12 +288,27 @@ export default function TodayScreen({ userId }: { userId: string }) {
     const trimmed = newTodo.trim();
     if (!trimmed) return;
     setNewTodo('');
-    const { data } = await supabase
+    const tempId = `tmp-${Date.now()}`;
+    const optimistic: Todo = {
+      id: tempId,
+      user_id: userId,
+      title: trimmed,
+      done: false,
+      due_date: null,
+      notes: null,
+      created_at: new Date().toISOString(),
+    };
+    setTodos((prev) => [...prev, optimistic]);
+    const { data, error } = await supabase
       .from('todos')
       .insert({ user_id: userId, title: trimmed })
       .select()
       .single();
-    if (data) setTodos((prev) => [...prev, data as Todo]);
+    if (data) {
+      setTodos((prev) => prev.map((t) => (t.id === tempId ? (data as Todo) : t)));
+    } else if (error) {
+      setTodos((prev) => prev.filter((t) => t.id !== tempId));
+    }
   }
 
   const doneHabits = habits.filter((h) => isDone(h));
