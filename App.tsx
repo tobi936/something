@@ -23,14 +23,16 @@ import { theme } from './lib/theme';
 import { GradientBackground } from './components/ui';
 import AuthScreen from './screens/AuthScreen';
 import TodayScreen from './screens/TodayScreen';
+import CalendarScreen from './screens/CalendarScreen';
 import HabitsScreen from './screens/HabitsScreen';
 import ReflectionScreen from './screens/ReflectionScreen';
 import SettingsScreen from './screens/SettingsScreen';
 
-type Tab = 'today' | 'habits' | 'reflection';
+type Tab = 'today' | 'calendar' | 'habits' | 'reflection';
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'today', label: 'Heute' },
+  { key: 'calendar', label: 'Kalender' },
   { key: 'habits', label: 'Gewohnheiten' },
   { key: 'reflection', label: 'Rückblick' },
 ];
@@ -83,6 +85,7 @@ export default function App() {
         <StatusBar style="dark" />
         <View style={styles.body}>
           {tab === 'today' && <TodayScreen userId={userId} />}
+          {tab === 'calendar' && <CalendarScreen userId={userId} />}
           {tab === 'habits' && <HabitsScreen userId={userId} />}
           {tab === 'reflection' && <ReflectionScreen onSettingsPress={() => setShowSettings(true)} />}
         </View>
@@ -92,7 +95,13 @@ export default function App() {
             const active = tab === t.key;
             return (
               <Pressable key={t.key} style={styles.tab} onPress={() => setTab(t.key)}>
-                <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
+                <Text
+                  style={[styles.tabText, active && styles.tabTextActive]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {t.label}
+                </Text>
                 {active ? <View style={styles.dot} /> : <View style={styles.dotEmpty} />}
               </Pressable>
             );

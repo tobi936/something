@@ -48,8 +48,20 @@ export function SectionLabel({ children }: { children: string }) {
   return <Text style={styles.sectionLabel}>{children}</Text>;
 }
 
-export function Muted({ children, style }: { children: React.ReactNode; style?: TextStyle }) {
-  return <Text style={[styles.muted, style]}>{children}</Text>;
+export function Muted({
+  children,
+  style,
+  numberOfLines,
+}: {
+  children: React.ReactNode;
+  style?: TextStyle;
+  numberOfLines?: number;
+}) {
+  return (
+    <Text style={[styles.muted, style]} numberOfLines={numberOfLines}>
+      {children}
+    </Text>
+  );
 }
 
 export function Check({ on, color }: { on: boolean; color?: string }) {
