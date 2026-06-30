@@ -3,6 +3,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -10,7 +11,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { theme } from '../lib/theme';
 import { Card, Muted, ScreenTitle, SectionLabel, SoftButton } from '../components/ui';
-import { Frequency, Habit, HABIT_COLORS, todayISO } from '../lib/types';
+import { Frequency, Habit, HabitCondition, HabitConditionType, HABIT_COLORS, todayISO } from '../lib/types';
 
 export default function HabitsScreen({ userId }: { userId: string }) {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -18,6 +19,9 @@ export default function HabitsScreen({ userId }: { userId: string }) {
   const [name, setName] = useState('');
   const [freq, setFreq] = useState<Frequency>('daily');
   const [adding, setAdding] = useState(false);
+  const [conditionEnabled, setConditionEnabled] = useState(false);
+  const [conditionType, setConditionType] = useState<HabitConditionType>('screen_time_lt');
+  const [conditionHours, setConditionHours] = useState('2');
 
   const monthStart = todayISO(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 
@@ -50,11 +54,17 @@ export default function HabitsScreen({ userId }: { userId: string }) {
     if (!trimmed) return;
     setAdding(true);
     const color = HABIT_COLORS[habits.length % HABIT_COLORS.length];
+    const condition: HabitCondition | null = conditionEnabled
+      ? { type: conditionType, value: Math.round(parseFloat(conditionHours || '0') * 60) }
+      : null;
     await supabase
       .from('habits')
-      .insert({ user_id: userId, name: trimmed, frequency: freq, color });
+      .insert({ user_id: userId, name: trimmed, frequency: freq, color, condition });
     setName('');
     setFreq('daily');
+    setConditionEnabled(false);
+    setConditionType('screen_time_lt');
+    setConditionHours('2');
     setAdding(false);
     load();
   }
@@ -92,6 +102,59 @@ export default function HabitsScreen({ userId }: { userId: string }) {
             </Pressable>
           ))}
         </View>
+        {/* Condition toggle */}
+        <View style={styles.conditionRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.conditionLabel}>Automatisch</Text>
+            <Muted style={styles.conditionSub}>Wird erledigt wenn Bedingung erfüllt</Muted>
+          </View>
+          <Switch
+            value={conditionEnabled}
+            onValueChange={setConditionEnabled}
+            trackColor={{ true: theme.colors.accent }}
+            thumbColor="#fff"
+          />
+        </View>
+
+        {conditionEnabled && (
+          <View style={styles.conditionBox}>
+            <Muted style={styles.conditionBoxLabel}>Wenn …</Muted>
+            {/* Variable: only screen time for now */}
+            <View style={styles.conditionPill}>
+              <Text style={styles.conditionPillText}>Bildschirmzeit heute</Text>
+            </View>
+            {/* Operator */}
+            <View style={styles.segment}>
+              {(['screen_time_lt', 'screen_time_gt'] as HabitConditionType[]).map((t) => (
+                <Pressable
+                  key={t}
+                  onPress={() => setConditionType(t)}
+                  style={[styles.segmentItem, conditionType === t && styles.segmentItemOn]}
+                >
+                  <Text style={[styles.segmentText, conditionType === t && styles.segmentTextOn]}>
+                    {t === 'screen_time_lt' ? 'unter' : 'über'}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            {/* Value */}
+            <View style={styles.conditionValueRow}>
+              <TextInput
+                value={conditionHours}
+                onChangeText={setConditionHours}
+                keyboardType="decimal-pad"
+                style={styles.conditionValueInput}
+                selectTextOnFocus
+              />
+              <Text style={styles.conditionValueUnit}>Stunden</Text>
+            </View>
+            <Muted style={styles.conditionPreview}>
+              → Erledigt wenn Bildschirmzeit {conditionType === 'screen_time_lt' ? 'unter' : 'über'}{' '}
+              {conditionHours || '0'}h
+            </Muted>
+          </View>
+        )}
+
         <SoftButton label="Hinzufügen" onPress={add} loading={adding} />
       </Card>
 
@@ -110,6 +173,13 @@ export default function HabitsScreen({ userId }: { userId: string }) {
                 <Text style={styles.name}>{h.name}</Text>
                 <Muted style={styles.meta}>
                   {h.frequency === 'daily' ? 'täglich' : 'wöchentlich'} · {counts[h.id] ?? 0}×
+                  {h.condition && (
+                    <>
+                      {' · '}
+                      {h.condition.type === 'screen_time_lt' ? '<' : '>'}
+                      {' '}{Math.round(h.condition.value / 60)}h Bildschirm
+                    </>
+                  )}
                 </Muted>
               </View>
               <Pressable onPress={() => archive(h)} hitSlop={10}>
@@ -158,4 +228,50 @@ const styles = StyleSheet.create({
   name: { fontSize: theme.font.body, color: theme.colors.text, fontFamily: theme.family.medium },
   meta: { fontSize: theme.font.small, marginTop: 2 },
   remove: { color: theme.colors.faint, fontSize: theme.font.small, fontFamily: theme.family.regular },
+
+  conditionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  conditionLabel: { fontSize: theme.font.body, color: theme.colors.text, fontFamily: theme.family.medium },
+  conditionSub: { fontSize: theme.font.small - 1, marginTop: 1 },
+  conditionBox: {
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing(1.5),
+    marginBottom: theme.spacing(1.5),
+    gap: 8,
+  },
+  conditionBoxLabel: { fontSize: theme.font.small, marginBottom: 2 },
+  conditionPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: theme.colors.accentSoft,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  conditionPillText: { fontSize: theme.font.small, color: theme.colors.accent, fontFamily: theme.family.semibold },
+  conditionValueRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  conditionValueInput: {
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: theme.font.body,
+    color: theme.colors.text,
+    fontFamily: theme.family.medium,
+    width: 70,
+    textAlign: 'center',
+  },
+  conditionValueUnit: { fontSize: theme.font.body, color: theme.colors.text, fontFamily: theme.family.regular },
+  conditionPreview: { fontSize: theme.font.small, fontStyle: 'italic' },
 });

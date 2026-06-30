@@ -1,5 +1,12 @@
 export type Frequency = 'daily' | 'weekly';
 
+export type HabitConditionType = 'screen_time_lt' | 'screen_time_gt';
+
+export type HabitCondition = {
+  type: HabitConditionType;
+  value: number; // minutes
+};
+
 export type Habit = {
   id: string;
   user_id: string;
@@ -8,6 +15,7 @@ export type Habit = {
   frequency: Frequency;
   archived: boolean;
   created_at: string;
+  condition: HabitCondition | null;
 };
 
 export type HabitEntry = {
