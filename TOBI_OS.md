@@ -25,21 +25,28 @@ Was ansteht. Termine, Deadlines, Freizeit. Verbunden mit deinem echten Kalender 
 
 ---
 
-## Der Score
+## Der Rückblick
 
-Am Ende des Monats, des Quartals, des Jahres siehst du deine Zahlen.
+Statistiken, Prozentzahlen, Liniendiagramme, Trends — alles da. Du siehst wie sich deine Zahlen über Monate entwickeln, welche Gewohnheiten konstant sind und wo es Schwankungen gibt.
 
-> *"August: Sport 12/31 Tage. Sozial 8/31 Tage."*
+> *"August: Sport 12/31 Tage (39%). September: 18/30 (60%)."*
 
-Keine Erklärung. Kein Urteil. Einfach die Zahl. Du weisst selbst was sie bedeutet.
+Die App zeigt dir die Daten so klar wie möglich. Kein Kommentar dazu. Kein "gut gemacht" oder "du solltest mehr Sport machen." Du interpretierst — die App liefert nur die Zahlen und die Visualisierung.
 
-In einem Jahr schaust du zurück und siehst wie du warst. Nicht als Chart mit Trend-Pfeilen. Einfach als Erinnerung.
+Dot-Kalender, Balken, Linien, Jahres-Grid — verschiedene Wege denselben Datensatz zu sehen. Du schaust zurück und verstehst selbst was die Kurve bedeutet.
 
 ---
 
-## Der Rückblick
+## Was es nicht ist
 
-Tobi OS merkt sich alles — nicht um dich zu kontrollieren, sondern damit du später zurückschauen kannst. Vor 6 Monaten warst du kaum sozial. Heute anders. Du siehst es selbst.
+- Kein Second Brain der für dich entscheidet
+- Kein AI-Assistent der deinen Tag plant oder dir sagt wann du was tun sollst
+- Kein Tool das dich erinnert, pusht oder unter Druck setzt
+- Keine Gamification, keine Streaks, kein Druck
+
+Der Unterschied: Die App darf dir zeigen dass du im September mehr Sport gemacht hast als im August. Sie darf dir nicht sagen dass du jetzt Sport machen sollst.
+
+Du denkst. Du entscheidest. Die App speichert, zeigt, verbindet.
 
 ---
 
@@ -51,17 +58,6 @@ Dein Leben fliesst automatisch rein — du machst nichts doppelt:
 - **Google Drive / Teams-Dateien** — Lernmaterial ist direkt dabei, kein Tab-Wechsel
 - **Google Kalender / Outlook** — Termine erscheinen automatisch
 - **Claude** — eingebettet zum Lernen, direkt bei den Aufgaben und Dateien
-
----
-
-## Was es nicht ist
-
-- Kein Second Brain der für dich denkt
-- Kein AI-Assistent der deinen Tag plant
-- Kein Tool das dich erinnert, pusht oder bewertet
-- Keine Gamification, keine Streaks, kein Druck
-
-Du denkst. Du entscheidest. Die App speichert, zeigt, verbindet.
 
 ---
 
