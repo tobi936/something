@@ -7,7 +7,16 @@ import { Card, Muted, ScreenTitle, SectionLabel } from '../components/ui';
 import { Habit, todayISO, weekStartISO } from '../lib/types';
 
 type Entry = { habit_id: string; date: string };
+type ScreenTimeRow = { date: string; minutes: number };
 type Mode = 'month' | 'year';
+
+const SCREEN_TIME_COLOR = '#F43F5E'; // Rose — distinct from habit colours
+
+function formatMinutesShort(m: number): string {
+  if (m < 60) return `${Math.round(m)}m`;
+  const h = Math.floor(m / 60);
+  return `${h}h ${Math.round(m % 60)}m`;
+}
 
 const MONTHS_DE = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 
@@ -87,6 +96,7 @@ export default function ReflectionScreen() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [prevEntries, setPrevEntries] = useState<Entry[]>([]);
+  const [screenTime, setScreenTime] = useState<ScreenTimeRow[]>([]);
 
   const { width: screenWidth } = useWindowDimensions();
   const chartWidth = screenWidth - 80;
@@ -113,19 +123,25 @@ export default function ReflectionScreen() {
 
   const load = useCallback(async () => {
     if (mode === 'year') {
-      const [{ data: hs }, { data: ent }] = await Promise.all([
+      const [{ data: hs }, { data: ent }, { data: st }] = await Promise.all([
         supabase.from('habits').select('*').order('created_at'),
         supabase
           .from('habit_entries')
           .select('habit_id, date')
           .gte('date', `${currentYear}-01-01`)
           .lte('date', `${currentYear}-12-31`),
+        supabase
+          .from('screen_time')
+          .select('date, minutes')
+          .gte('date', `${currentYear}-01-01`)
+          .lte('date', `${currentYear}-12-31`),
       ]);
       setHabits((hs as Habit[]) ?? []);
       setEntries((ent as Entry[]) ?? []);
       setPrevEntries([]);
+      setScreenTime((st as ScreenTimeRow[]) ?? []);
     } else {
-      const [{ data: hs }, { data: ent }, { data: prev }] = await Promise.all([
+      const [{ data: hs }, { data: ent }, { data: prev }, { data: st }] = await Promise.all([
         supabase.from('habits').select('*').order('created_at'),
         supabase
           .from('habit_entries')
@@ -137,10 +153,16 @@ export default function ReflectionScreen() {
           .select('habit_id, date')
           .gte('date', prevMonthStart)
           .lte('date', prevMonthEnd),
+        supabase
+          .from('screen_time')
+          .select('date, minutes')
+          .gte('date', monthStart)
+          .lte('date', monthEnd),
       ]);
       setHabits((hs as Habit[]) ?? []);
       setEntries((ent as Entry[]) ?? []);
       setPrevEntries((prev as Entry[]) ?? []);
+      setScreenTime((st as ScreenTimeRow[]) ?? []);
     }
   }, [mode, monthStart, monthEnd, prevMonthStart, prevMonthEnd, currentYear]);
 
@@ -194,6 +216,39 @@ export default function ReflectionScreen() {
       })
       .filter((s) => s.yearTotal > 0);
   }, [habits, entries]);
+
+  // Screen time — daily minutes for month, monthly average for year
+  const screenTimeMonth = useMemo(() => {
+    const byDate = new Map(screenTime.map((r) => [r.date, r.minutes]));
+    const data: number[] = [];
+    let recorded = 0;
+    let sum = 0;
+    for (let d = 1; d <= lastPlottedDay; d++) {
+      const dateStr = `${monthStart.slice(0, 7)}-${String(d).padStart(2, '0')}`;
+      const m = byDate.get(dateStr) ?? 0;
+      data.push(m);
+      if (byDate.has(dateStr)) {
+        recorded++;
+        sum += m;
+      }
+    }
+    const avg = recorded > 0 ? sum / recorded : 0;
+    return { data, recorded, avg };
+  }, [screenTime, lastPlottedDay, monthStart]);
+
+  const screenTimeYear = useMemo(() => {
+    const sums = Array(12).fill(0) as number[];
+    const counts = Array(12).fill(0) as number[];
+    screenTime.forEach((r) => {
+      const mi = parseInt(r.date.slice(5, 7), 10) - 1;
+      sums[mi] += r.minutes;
+      counts[mi]++;
+    });
+    const data = sums.map((s, i) => (counts[i] > 0 ? s / counts[i] : 0));
+    const recorded = counts.reduce((a, b) => a + b, 0);
+    const totalAvg = recorded > 0 ? screenTime.reduce((a, r) => a + r.minutes, 0) / recorded : 0;
+    return { data, recorded, avg: totalAvg };
+  }, [screenTime]);
 
   const totalCheckins = entries.length;
   const monthLabel = month.toLocaleDateString('de-CH', { month: 'long', year: 'numeric' });
@@ -282,6 +337,28 @@ export default function ReflectionScreen() {
               </Card>
             </>
           )}
+
+          {/* Screen time — daily minutes */}
+          {screenTimeMonth.recorded > 0 && (
+            <Card style={{ marginBottom: theme.spacing(3) }}>
+              <LineChart
+                series={[{ color: SCREEN_TIME_COLOR, data: screenTimeMonth.data }]}
+                width={chartWidth}
+                height={120}
+              />
+              <View style={styles.monthXRow}>
+                <Text style={styles.xLabel}>1</Text>
+                <Text style={styles.xLabel}>{lastPlottedDay}</Text>
+              </View>
+              <View style={styles.legend}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: SCREEN_TIME_COLOR }]} />
+                  <Text style={styles.legendName}>Bildschirmzeit · ⌀ pro Tag</Text>
+                  <Text style={styles.legendCount}>{formatMinutesShort(screenTimeMonth.avg)}</Text>
+                </View>
+              </View>
+            </Card>
+          )}
         </>
       ) : (
         <>
@@ -321,6 +398,35 @@ export default function ReflectionScreen() {
                     <Text style={styles.legendCount}>{s.yearTotal}</Text>
                   </View>
                 ))}
+              </View>
+            </Card>
+          )}
+
+          {/* Screen time — monthly average */}
+          {screenTimeYear.recorded > 0 && (
+            <Card style={{ marginTop: theme.spacing(3) }}>
+              <LineChart
+                series={[{ color: SCREEN_TIME_COLOR, data: screenTimeYear.data }]}
+                width={chartWidth}
+                height={140}
+                markerIdx={now.getMonth()}
+              />
+              <View style={styles.yearXRow}>
+                {MONTHS_DE.map((m, idx) => (
+                  <Text
+                    key={idx}
+                    style={[styles.xLabel, idx === now.getMonth() && styles.xLabelCurrent]}
+                  >
+                    {m}
+                  </Text>
+                ))}
+              </View>
+              <View style={styles.legend}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: SCREEN_TIME_COLOR }]} />
+                  <Text style={styles.legendName}>Bildschirmzeit · ⌀ pro Tag</Text>
+                  <Text style={styles.legendCount}>{formatMinutesShort(screenTimeYear.avg)}</Text>
+                </View>
               </View>
             </Card>
           )}
