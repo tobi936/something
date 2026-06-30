@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "tobi-os",
-    "slug": "tobi-os",
+    "name": "Flux",
+    "slug": "flux",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "tobios",
+    "scheme": "flux",
     "ios": {
       "supportsTablet": true
     },

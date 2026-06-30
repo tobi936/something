@@ -1,22 +1,21 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
+import { supabase } from './supabase';
 import { todayISO } from './types';
 
-const KEY = () => `ios_screentime_${todayISO()}`;
-
 export type ScreenTimeData = {
-  minutes: number | null; // iOS screen time imported via Shortcut
-  inAppSeconds: number;   // time spent in this app today
+  minutes: number | null;
+  inAppSeconds: number;
 };
 
-async function loadImported(): Promise<number | null> {
-  const v = await AsyncStorage.getItem(KEY());
-  return v !== null ? parseInt(v, 10) : null;
-}
-
-async function saveImported(minutes: number) {
-  await AsyncStorage.setItem(KEY(), String(minutes));
+async function loadFromSupabase(): Promise<number | null> {
+  const { data } = await supabase
+    .from('screen_time')
+    .select('minutes')
+    .eq('date', todayISO())
+    .maybeSingle();
+  return data?.minutes ?? null;
 }
 
 export function formatMinutes(m: number): string {
@@ -24,7 +23,6 @@ export function formatMinutes(m: number): string {
   return `${Math.floor(m / 60)}h ${m % 60}m`;
 }
 
-// Parses tobios://screentime?minutes=X
 function parseScreenTimeUrl(url: string): number | null {
   try {
     const parsed = Linking.parse(url);
@@ -40,29 +38,22 @@ export function useImportedScreenTime() {
   const [minutes, setMinutes] = useState<number | null>(null);
 
   useEffect(() => {
-    // Load persisted value
-    loadImported().then(setMinutes);
+    // Always read from Supabase — works on web and native
+    loadFromSupabase().then(setMinutes);
 
-    // Handle URL when app is already open
+    if (Platform.OS === 'web') return;
+
+    // Native only: also listen for flux:// deep links
     const sub = Linking.addEventListener('url', ({ url }) => {
       const m = parseScreenTimeUrl(url);
-      if (m !== null) {
-        setMinutes(m);
-        saveImported(m);
-      }
+      if (m !== null) setMinutes(m);
     });
-
-    // Handle URL that opened the app cold
     Linking.getInitialURL().then((url) => {
       if (url) {
         const m = parseScreenTimeUrl(url);
-        if (m !== null) {
-          setMinutes(m);
-          saveImported(m);
-        }
+        if (m !== null) setMinutes(m);
       }
     });
-
     return () => sub.remove();
   }, []);
 

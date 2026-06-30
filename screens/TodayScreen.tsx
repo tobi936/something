@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Linking from 'expo-linking';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AppState,
@@ -115,6 +116,51 @@ function ProgressRing({
   );
 }
 
+// ── Shortcut setup card ─────────────────────────────────────────────────────
+const DISMISSED_KEY = 'shortcut_guide_dismissed_v1';
+
+const STEPS = [
+  'Öffne die Kurzbefehle App auf deinem iPhone.',
+  'Tippe auf „Automatisierung" → „+" → „Persönliche Automatisierung".',
+  'Wähle „Tageszeit" (z.B. jeden Tag um 22:00 Uhr).',
+  'Füge Aktion „Bildschirmzeit-Zusammenfassung abrufen" hinzu.',
+  'Füge Aktion „URL-Inhalt abrufen" hinzu:\nURL: https://iohqjdtvivkfqarvhxll.supabase.co/functions/v1/screentime\nMethode: POST · JSON-Body: {\"minutes\": [Minuten aus Schritt 4]}\nHeader: Authorization = Bearer <TOKEN AUS DER APP-EINRICHTUNG>',
+  'Deaktiviere „Vor Ausführung fragen" und speichere.',
+];
+
+function ShortcutSetupCard({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <Card style={styles.shortcutCard}>
+      <View style={styles.shortcutHeader}>
+        <Text style={styles.shortcutTitle}>iOS Bildschirmzeit einrichten</Text>
+        <Pressable onPress={onDismiss} hitSlop={12}>
+          <Text style={styles.shortcutClose}>✕</Text>
+        </Pressable>
+      </View>
+      <Muted style={styles.shortcutDesc}>
+        Importiere deine tägliche Bildschirmzeit automatisch via iOS Kurzbefehle.
+      </Muted>
+      {STEPS.map((step, i) => (
+        <View key={i} style={styles.shortcutStep}>
+          <View style={styles.shortcutBadge}>
+            <Text style={styles.shortcutBadgeNum}>{i + 1}</Text>
+          </View>
+          <Text style={styles.shortcutStepText}>{step}</Text>
+        </View>
+      ))}
+      <Pressable
+        style={styles.shortcutBtn}
+        onPress={() => Linking.openURL('shortcuts://')}
+      >
+        <Text style={styles.shortcutBtnText}>Kurzbefehle öffnen</Text>
+      </Pressable>
+      <Pressable onPress={onDismiss} style={{ marginTop: 10, alignItems: 'center' }}>
+        <Muted style={{ fontSize: theme.font.small }}>Schliessen</Muted>
+      </Pressable>
+    </Card>
+  );
+}
+
 // ── Main screen ─────────────────────────────────────────────────────────────
 export default function TodayScreen({ userId }: { userId: string }) {
   const today = todayISO();
@@ -126,6 +172,18 @@ export default function TodayScreen({ userId }: { userId: string }) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [newTodo, setNewTodo] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [shortcutDismissed, setShortcutDismissed] = useState(true); // default true until loaded
+
+  useEffect(() => {
+    AsyncStorage.getItem(DISMISSED_KEY).then((v) => {
+      setShortcutDismissed(v === '1');
+    });
+  }, []);
+
+  function dismissShortcutCard() {
+    setShortcutDismissed(true);
+    AsyncStorage.setItem(DISMISSED_KEY, '1');
+  }
 
   // Screen time tracking
   const [secondsToday, setSecondsToday] = useState(0);
@@ -316,6 +374,11 @@ export default function TodayScreen({ userId }: { userId: string }) {
           pending={pendingHabits.map((h) => h.name)}
         />
 
+        {/* Shortcut setup guide */}
+        {importedScreenTime === null && !shortcutDismissed && (
+          <ShortcutSetupCard onDismiss={dismissShortcutCard} />
+        )}
+
         {/* Habits */}
         {habits.length > 0 && (
           <>
@@ -492,4 +555,31 @@ const styles = StyleSheet.create({
     fontFamily: theme.family.regular,
     paddingVertical: 4,
   },
+
+  shortcutCard: { marginBottom: theme.spacing(3) },
+  shortcutHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  shortcutTitle: { fontSize: theme.font.body, color: theme.colors.text, fontFamily: theme.family.semibold },
+  shortcutClose: { fontSize: 16, color: theme.colors.faint, paddingLeft: 12 },
+  shortcutDesc: { fontSize: theme.font.small, marginBottom: theme.spacing(2) },
+  shortcutStep: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10, gap: 10 },
+  shortcutBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: theme.colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginTop: 1,
+  },
+  shortcutBadgeNum: { fontSize: 11, color: theme.colors.accent, fontFamily: theme.family.bold },
+  shortcutStepText: { flex: 1, fontSize: theme.font.small, color: theme.colors.text, fontFamily: theme.family.regular, lineHeight: 18 },
+  shortcutBtn: {
+    marginTop: theme.spacing(1),
+    backgroundColor: theme.colors.accent,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  shortcutBtnText: { fontSize: theme.font.body, color: '#fff', fontFamily: theme.family.semibold },
 });
