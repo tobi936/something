@@ -1,9 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  AppState,
-  AppStateStatus,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -20,25 +18,6 @@ import { theme } from '../lib/theme';
 import { Card, Check, Muted, SectionLabel } from '../components/ui';
 import { CalendarEvent, Habit, HabitEntry, Todo, todayISO, weekStartISO } from '../lib/types';
 import { formatMinutes, useImportedScreenTime } from '../lib/useScreenTime';
-
-// ── In-app screen time ──────────────────────────────────────────────────────
-const STORAGE_KEY = () => `screentime_${todayISO()}`;
-
-async function loadSecondsToday(): Promise<number> {
-  const v = await AsyncStorage.getItem(STORAGE_KEY());
-  return v ? parseInt(v, 10) : 0;
-}
-
-async function saveSecondsToday(s: number) {
-  await AsyncStorage.setItem(STORAGE_KEY(), String(s));
-}
-
-function formatTime(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const m = Math.floor(seconds / 60);
-  if (m < 60) return `${m}m`;
-  return `${Math.floor(m / 60)}h ${m % 60}m`;
-}
 
 // ── Greeting ────────────────────────────────────────────────────────────────
 function greeting(): string {
@@ -185,54 +164,6 @@ export default function TodayScreen({ userId }: { userId: string }) {
     AsyncStorage.setItem(DISMISSED_KEY, '1');
   }
 
-  // Screen time tracking
-  const [secondsToday, setSecondsToday] = useState(0);
-  const sessionStart = useRef<number | null>(null);
-  const accumulatedRef = useRef(0);
-
-  useEffect(() => {
-    loadSecondsToday().then((s) => {
-      accumulatedRef.current = s;
-      setSecondsToday(s);
-    });
-
-    sessionStart.current = Date.now();
-
-    // Tick every 10s to update display
-    const ticker = setInterval(() => {
-      if (sessionStart.current != null) {
-        const sessionSec = Math.floor((Date.now() - sessionStart.current) / 1000);
-        setSecondsToday(accumulatedRef.current + sessionSec);
-      }
-    }, 10000);
-
-    const handleAppState = (next: AppStateStatus) => {
-      if (next === 'background' || next === 'inactive') {
-        if (sessionStart.current != null) {
-          const elapsed = Math.floor((Date.now() - sessionStart.current) / 1000);
-          accumulatedRef.current += elapsed;
-          saveSecondsToday(accumulatedRef.current);
-          setSecondsToday(accumulatedRef.current);
-          sessionStart.current = null;
-        }
-      } else if (next === 'active') {
-        sessionStart.current = Date.now();
-      }
-    };
-
-    const sub = AppState.addEventListener('change', handleAppState);
-    return () => {
-      clearInterval(ticker);
-      sub.remove();
-      // Save on unmount
-      if (sessionStart.current != null) {
-        const elapsed = Math.floor((Date.now() - sessionStart.current) / 1000);
-        accumulatedRef.current += elapsed;
-        saveSecondsToday(accumulatedRef.current);
-      }
-    };
-  }, []);
-
   const load = useCallback(async () => {
     const [h, ent, t, ev] = await Promise.all([
       supabase.from('habits').select('*').eq('archived', false).order('created_at'),
@@ -352,19 +283,12 @@ export default function TodayScreen({ userId }: { userId: string }) {
             <Text style={styles.greeting}>{greeting()}</Text>
             <Muted style={styles.dateText}>{dateStr}</Muted>
           </View>
-          <View style={styles.timeBox}>
-            {importedScreenTime !== null ? (
-              <>
-                <Text style={styles.screenTimeNum}>{formatMinutes(importedScreenTime)}</Text>
-                <Muted style={styles.screenTimeSub}>Bildschirmzeit</Muted>
-              </>
-            ) : (
-              <>
-                <Text style={styles.screenTimeNum}>{formatTime(secondsToday)}</Text>
-                <Muted style={styles.screenTimeSub}>im App</Muted>
-              </>
-            )}
-          </View>
+          {importedScreenTime !== null && (
+            <View style={styles.timeBox}>
+              <Text style={styles.screenTimeNum}>{formatMinutes(importedScreenTime)}</Text>
+              <Muted style={styles.screenTimeSub}>Bildschirmzeit</Muted>
+            </View>
+          )}
         </View>
 
         {/* Ring */}
